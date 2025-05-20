@@ -1,99 +1,147 @@
-import { useState } from "react"
-import Display from "./Display"
-import Button from "./Button"
-import evaluate from "../utils/evaluate.js"
+import { useState } from 'react'
+import Display from './Display.jsx'
+import Button from './Button.jsx'
+import evaluate from '../utils/evaluate.js'
 
 export default function Calculator() {
-    const [display, setDisplay] = useState('')
-    const [pendingOp, setPendingOp] = useState(null)
-    const [accumulator, setAccumulator] = useState(null)
+  const [accumulator, setAccumulator] = useState(null)
+  const [operator, setOperator]       = useState(null)
+  const [current, setCurrent]         = useState('')
 
-    const keys = [
-        { value: 'AC',    type: 'function' },
-        { value: '±',     type: 'function' },
-        { value: '%',     type: 'special' },
-        { value: '÷',     type: 'operator' },
+  const keys = [
+    { value: 'AC', type: 'function' }, { value: '±',  type: 'function' },{ value: '%',  type: 'special'  },{ value: '⌫', type: 'function' },
 
-        { value: '7' }, { value: '8' }, { value: '9' }, { value: '×', type: 'operator' },
-        { value: '4' }, { value: '5' }, { value: '6' }, { value: '−', type: 'operator' },
-        { value: '1' }, { value: '2' }, { value: '3' }, { value: '+', type: 'operator' },
+    { value: '7' }, { value: '8' }, { value: '9' }, { value: '×', type: 'operator' },
+    { value: '4' }, { value: '5' }, { value: '6' }, { value: '−', type: 'operator' },
+    { value: '1' }, { value: '2' }, { value: '3' }, { value: '+', type: 'operator' },
 
-        { value: '0',    type: 'number',   wide: true }, 
-        { value: '.',    type: 'number' },
-        { value: '⌫',    type: 'function' },
-        { value: '=',    type: 'operator' },
-    ]
-    
-    function onKeyClick(val){
-        if (/[0-9.]/.test(val))          return handleNumber(val)
-        if (val === 'AC')                return handleClear()
-        if (val === '±')                 return handleToggleSign()
-        if (val === '⌫')                 return handleDelete()
-        if (val === '=')                 return handleEqual()
-        if (/[%÷×−+]/.test(val))         return handleOperator(val)
+    { value: '0'  }, { value: '.' }, { value: '=',  type: 'operator' },{ value: '÷', type: 'operator' },
+  ]
+
+  function onKey(val) {
+    if (/[0-9.]/.test(val))    return handleNumber(val)
+    if (val === 'AC')          return handleClear()
+    if (val === '±')           return handleToggleSign()
+    if (val === '⌫')           return handleDelete()
+    if (val === '=')           return handleEqual()
+    return handleOperator(val)
+  }
+
+  function handleNumber(d) {
+    if(d === '.' && current.includes('.')) return
+    if (!operator && accumulator !== null) {
+      setAccumulator(null)
+      setCurrent(d)
+      return
     }
-
-    function handleNumber(d) {
-        setDisplay(prev => (prev.length < 9 ? prev + d : prev))
-    }
-
-    function handleClear() {
-        setDisplay('')
-        setAccumulator(null)
-        setPendingOp(null)
-    }
-
-    function handleToggleSign() {
-        setDisplay(prev => prev.startsWith('-') ? prev.slice(1) : '-' + prev)
-    }
-
-    function handleDelete() {
-        setDisplay(prev => prev.slice(0, -1))
-    }
+    if (current.length < 9) setCurrent(prev => prev + d)
+  }
 
     function handleOperator(op) {
-        if (display === '' && accumulator == null) return
-        if (accumulator == null) {
-        setAccumulator(parseFloat(display))
-        } else if (pendingOp) {
-        const result = evaluate(accumulator, parseFloat(display), pendingOp)
-        setAccumulator(result)
-        setDisplay(String(result))
+        if ((op === '-' || op === '−') && current === '') {
+            setCurrent('-')
+            return
         }
-        setDisplay('')
-        setPendingOp(op)
+        if (accumulator === null && current !== '' && current !== '-') {
+            setAccumulator(parseFloat(current))
+            setOperator(op)
+            setCurrent('')
+            return
+        }
+        if (current === '-' || current === '') {
+            setOperator(op)
+            return
+        }
+        const res = evaluate(accumulator, parseFloat(current), operator)
+        if (typeof res === 'number' && (res < 0 || Math.abs(res) > 999999999)) {
+            setAccumulator(null)
+            setOperator(null)
+            setCurrent('ERROR')
+        } else {
+            setAccumulator(res)
+            setOperator(op)
+            setCurrent('')
+        }
     }
 
     function handleEqual() {
-        if (pendingOp && accumulator != null) {
-        const result = evaluate(accumulator, parseFloat(display), pendingOp)
-        setDisplay(String(result))
-        setAccumulator(null)
-        setPendingOp(null)
+    if (operator && current !== '') {
+        const res = evaluate(accumulator, parseFloat(current), operator)
+        if (typeof res === 'number' && (res < 0 || Math.abs(res) > 999999999)) {
+            setAccumulator(null)
+            setOperator(null)
+            setCurrent('ERROR')
+        } else {
+            setAccumulator(null)
+            setOperator(null)
+            setCurrent(res)
         }
     }
+    }
 
-    return (
-        <div className="
-        w-full sm:w-80 mx-auto
-        p-4 bg-gray-900 rounded-2xl shadow-2xl
-        flex flex-col
-        ">
-        <Display value={display} />
+  function handleClear() {
+    setAccumulator(null)
+    setOperator(null)
+    setCurrent('')
+  }
 
-        <div className="
-            grid grid-cols-4 gap-2 mt-4
-        ">
-            {keys.map(({ value, type, wide }, i) => (
-            <Button
-                key={i}
-                value={value}
-                type={type}
-                onClick={onKeyClick}
-                className={wide ? 'col-span-2' : ''}
-            />
-            ))}
-        </div>
-        </div>
-    )
+  function handleToggleSign() {
+    setCurrent(prev => prev.startsWith('-') ? prev.slice(1) : '-' + prev)
+  }
+
+  function handleDelete() {
+    setCurrent(prev => prev.slice(0, -1))
+  }
+
+  const expression = operator
+    ? `${accumulator ?? ''} ${operator} ${current}`
+    : ''
+    const result = (() => {
+        if (current === 'ERROR') return 'ERROR'
+        if (!operator && current === '' && accumulator !== null) return accumulator
+        if (operator && current !== '') return evaluate(accumulator, parseFloat(current), operator)
+        if(!isNaN(current) && current !== '') return Number(current)
+        return current || '0'
+    })()
+
+    const displayResult = result === 'ERROR'
+        ? 'ERROR'
+        : (typeof result === 'number' && (result < 0 || Math.abs(result) > 999999999))
+            ? 'ERROR'
+            : String(result)
+  return (
+    <div className="
+      w-full               /* móvil: ancho completo */
+      h-full               /* móvil: altura completa del padre (h-screen) */
+      sm:w-80              /* desktop: ancho fijo ≈20rem */
+      sm:h-auto            /* desktop: altura según contenido */
+      mx-auto              /* desktop: centrado horizontal */
+      p-4 
+      bg-gray-900 
+      rounded-none sm:rounded-2xl 
+      shadow-2xl
+      flex flex-col
+    ">
+      {/* DISPLAY */}
+      <Display expression={expression} result={displayResult} />
+
+      {/* TECLADO */}
+      <div className="
+        grid grid-cols-4 grid-rows-5 gap-2 mt-2
+        auto-rows-fr    
+        flex-1        
+      ">
+        {keys.map(({ value, type, wide }, i) => (
+          <Button
+            key={i}
+            value={value}
+            type={type}
+            onClick={onKey}
+            className={wide ? 'col-span-2' : ''}
+          />
+        ))}
+      </div>
+    </div>
+  )
+
 }
