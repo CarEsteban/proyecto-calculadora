@@ -11,15 +11,14 @@ export default function useCalculator () {
     { value: '±', type: 'function' },
     { value: '%', type: 'special' },
     { value: '⌫', type: 'function' },
-
-    { value: '7' }, { value: '8' }, { value: '9' }, { value: '×', type: 'operator' },
-    { value: '4' }, { value: '5' }, { value: '6' }, { value: '−', type: 'operator' },
+    { value: '7' }, { value: '8' }, { value: '9' }, { value: 'x', type: 'operator' },
+    { value: '4' }, { value: '5' }, { value: '6' }, { value: '-', type: 'operator' },
     { value: '1' }, { value: '2' }, { value: '3' }, { value: '+', type: 'operator' },
-
     { value: '0' }, { value: '.' }, { value: '=', type: 'operator' }, { value: '÷', type: 'operator' }
   ]
 
   function onKey (val) {
+    if (current === 'ERROR' && val !== 'AC') return // Solo permite limpiar después de error
     if (/[0-9.]/.test(val)) return handleNumber(val)
     if (val === 'AC') return handleClear()
     if (val === '±') return handleToggleSign()
@@ -43,32 +42,37 @@ export default function useCalculator () {
       setCurrent('-')
       return
     }
+    // Si ya hay acumulador, operador y current, calcula el resultado parcial
+    if (accumulator !== null && operator && current !== '' && current !== '-') {
+      const res = evaluate(accumulator, parseFloat(current), operator)
+      if (res === 'ERROR') {
+        setAccumulator(null)
+        setOperator(null)
+        setCurrent('ERROR')
+      } else {
+        setAccumulator(res)
+        setOperator(op)
+        setCurrent('')
+      }
+      return
+    }
+    // Si solo hay current, guarda como acumulador y operador
     if (accumulator === null && current !== '' && current !== '-') {
       setAccumulator(parseFloat(current))
       setOperator(op)
       setCurrent('')
       return
     }
+    // Si solo cambia el operador
     if (current === '' || current === '-') {
       setOperator(op)
-      return
-    }
-    const res = evaluate(accumulator, parseFloat(current), operator)
-    if (typeof res === 'number' && (res < 0 || Math.abs(res) > 999999999)) {
-      setAccumulator(null)
-      setOperator(null)
-      setCurrent('ERROR')
-    } else {
-      setAccumulator(res)
-      setOperator(op)
-      setCurrent('')
     }
   }
 
   function handleEqual () {
     if (operator && current !== '' && current !== '-') {
       const res = evaluate(accumulator, parseFloat(current), operator)
-      if (typeof res === 'number' && (res < 0 || Math.abs(res) > 999999999)) {
+      if (res === 'ERROR') {
         setAccumulator(null)
         setOperator(null)
         setCurrent('ERROR')
@@ -97,13 +101,19 @@ export default function useCalculator () {
   const expression = operator
     ? `${accumulator ?? ''} ${operator} ${current}`
     : ''
+
+  // Lógica de resultado y displayResult corregida:
   const result = (() => {
     if (current === 'ERROR') return 'ERROR'
-    if (!operator && current === '' && accumulator !== null) return accumulator
+    // Si hay operador y current no es vacío ni solo '-', muestra el resultado parcial
     if (operator && current !== '' && current !== '-') {
-      return evaluate(accumulator, parseFloat(current), operator)
+      const res = evaluate(accumulator, parseFloat(current), operator)
+      return res
     }
-    if (!isNaN(current) && current !== '') return Number(current)
+    // Si solo hay current, muestra current
+    if (current !== '') return current
+    // Si solo hay acumulador, muestra acumulador
+    if (!operator && accumulator !== null) return accumulator
     return '0'
   })()
   const displayResult = result === 'ERROR'

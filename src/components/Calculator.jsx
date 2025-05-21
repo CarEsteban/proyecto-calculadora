@@ -1,4 +1,4 @@
-// src/components/Calculator.jsx
+import React from 'react'
 import useCalculator from '../hooks/useCalculator.js'
 import Display from './Display.jsx'
 import Button from './Button.jsx'

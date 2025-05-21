@@ -1,3 +1,4 @@
+import React from 'react'
 export default function Button ({ value, type = 'number', onClick, className = '' }) {
   const base = 'flex items-center justify-center font-semibold rounded-full shadow transition'
   const color = {
