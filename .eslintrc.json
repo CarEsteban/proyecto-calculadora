@@ -1,6 +1,12 @@
 {
-  "extends": ["standard"],
+  "extends": [
+    "standard",
+    "plugin:storybook/recommended"
+  ],
   "rules": {
-    "semi": ["error", "never"]
+    "semi": [
+      "error",
+      "never"
+    ]
   }
 }
