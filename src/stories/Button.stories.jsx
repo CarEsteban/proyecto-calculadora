@@ -1,7 +1,6 @@
 import React from 'react'
 import Button from '../components/Button.jsx'
 
-
 export default {
   title: 'Components/Button',
   component: Button,
@@ -9,10 +8,10 @@ export default {
     value: { control: 'text' },
     type: {
       control: { type: 'select' },
-      options: ['number','operator','special','function'],
+      options: ['number', 'operator', 'special', 'function']
     },
-    onClick: { action: 'clicked' },
-  },
+    onClick: { action: 'clicked' }
+  }
 }
 
 const Template = (args) => <Button {...args} />
