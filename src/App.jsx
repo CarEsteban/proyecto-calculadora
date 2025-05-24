@@ -5,7 +5,7 @@ export default function App () {
   return (
     <div
       className='
-        h-screen            /* móvil y desktop: altura de la ventana */
+        min-h-[100dvh] max-h-[100dvh]             /* móvil y desktop: altura de la ventana */
         bg-black
         flex flex-col       /* columna por defecto en móvil */
         sm:flex-row         /* row en desktop para centrar mejor */
